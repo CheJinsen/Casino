@@ -1,38 +1,38 @@
 package specfun.detail;
 
-import specfun.Lgamma;
+import specfun.LogGamma;
 
 public class Catherine {
 
     public static double bd0(double x, double np)
     {
-        double ej, s, s1, v;
-
         if(Double.isInfinite(x) || Double.isInfinite(np) || np == 0.0) {
             System.out.println("Argument out of domain in bd0.");
             return Double.NaN;
         }
 
         if (Math.abs(x-np) < 0.1*(x+np)) {
-            v = (x-np)/(x+np);  // might underflow to 0
-            s = (x-np)*v;/* s using v -- change by MM */
-            if(Math.abs(s) < Double.MIN_VALUE) return s;
-            ej = 2*x*v;
+            double v = (x - np) / (x + np);
+            double s = (x - np) * v;
+
+            if(Math.abs(s) < Double.MIN_VALUE) {
+                return s;
+            }
+
+            double ej = 2 * x * v;
             v = v*v;
-            for (int j = 1; j < 1000; j++) { /* Taylor series; 1000: no infinite loop
-						as |v| < .1,  v^2000 is "zero" */
-                ej *= v;// = v^(2j+1)
-                s1 = s+ej/((j<<1)+1);
-                if (s1 == s) /* last term was effectively 0 */
+            for (int j = 1; j < 1000; j++) {
+                ej *= v;
+                double s1 = s + ej / ((j << 1) + 1);
+                if (s1 == s)
                     return s1 ;
                 s = s1;
             }
         }
-        /* else:  | x - np |  is not too small */
-        return(x*Math.log(x/np)+np-x);
+        return x * Math.log(x / np) + np - x;
     }
 
-    public static double stirlerr(double n)
+    public static double stirlingError(double n)
     {
         final double S0 = 0.083333333333333333333;       /* 1/12 */
         final double S1 = 0.00277777777777777777778;     /* 1/360 */
@@ -40,10 +40,8 @@ public class Catherine {
         final double S3 = 0.000595238095238095238095238; /* 1/1680 */
         final double S4 = 0.0008417508417508417508417508;/* 1/1188 */
 
-/*
-  error for 0, 0.5, 1.0, 1.5, ..., 14.5, 15.0.
-*/
-        double[] sferr_halves = {
+        // error for 0, 0.5, 1.0, 1.5, ..., 14.5, 15.0.
+        double[] err_halves = {
                 0.0, /* n=0 - wrong, place holder only */
                 0.1534264097200273452913848,  /* 0.5 */
                 0.0810614667953272582196702,  /* 1.0 */
@@ -80,15 +78,14 @@ public class Catherine {
         final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
         if (n <= 15.0) {
             nn = n + n;
-            if (nn == (int)nn) return(sferr_halves[(int)nn]);
-            return(Lgamma.lammafn(n + 1.) - (n + 0.5)*Math.log(n) + n - M_LN_SQRT_2PI);
+            if (nn == (int)nn) return(err_halves[(int)nn]);
+            return LogGamma.logGamma(n + 1.0) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI;
         }
 
-        nn = n*n;
-        if (n>500) return((S0-S1/nn)/n);
-        if (n> 80) return((S0-(S1-S2/nn)/nn)/n);
-        if (n> 35) return((S0-(S1-(S2-S3/nn)/nn)/nn)/n);
-        /* 15 < n <= 35 : */
-        return((S0-(S1-(S2-(S3-S4/nn)/nn)/nn)/nn)/n);
+        nn = n * n;
+        if (n > 500) return (S0 - S1 / nn) / n;
+        if (n > 80) return (S0 - (S1 - S2 / nn) / nn) / n;
+        if (n > 35) return (S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / n;
+        return (S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) / n;
     }
 }

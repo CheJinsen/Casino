@@ -89,8 +89,8 @@ public class Choose {
 
     private static double logFastChoose2(double n, double k, Sign s_choose)
     {
-        double r = Lgamma.lgammafn_sign(n - k + 1.0, s_choose);
-        return Lgamma.lammafn(n + 1.0) - Lgamma.lammafn(k + 1.0) - r;
+        double r = LogGamma.logGammaFnSign(n - k + 1.0, s_choose);
+        return LogGamma.logGamma(n + 1.0) - LogGamma.logGamma(k + 1.0) - r;
     }
 
     public static double logChoose(double n, double k)
@@ -132,7 +132,7 @@ public class Choose {
 
     public static void main(String[] args)
     {
-        System.out.println(choose(50.321, 50));
+        System.out.println(choose(150, 50));
         System.out.println(logChoose(0.8956, 50));
     }
 }

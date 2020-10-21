@@ -1,9 +1,9 @@
 package specfun.detail;
 
-public class Lgammacor {
-    public static double lgammacor(double x)
+public class LogGammaCor {
+    public static double logGammaCor(double x)
     {
-        double[] algmcs = {
+        double[] cor = {
                 +.1666389480451863247205729650822e+0,
                 -.1384948176067563840732986059135e-4,
                 +.9810825646924729426157171547487e-8,
@@ -22,25 +22,20 @@ public class Lgammacor {
         };
 
         double tmp;
-
-        /* For IEEE double precision DBL_EPSILON = 2^-52 = 2.220446049250313e-16 :
-         *   xbig = 2 ^ 26.5
-         *   xmax = DBL_MAX / 48 =  2^1020 / 3 */
-        final int nalgm = 5;
-        final double xbig = 94906265.62425156;
-        final double xmax = 3.745194030963158e306;
+        final int naLgm = 5;
+        final double x_big = 94906265.62425156;  // 2 ^ 26.5
+        final double x_max = 3.745194030963158e306;  // DBL_MAX / 48
 
         if (x < 10) {
-            System.out.println("Argument out of domain in lgammacor");
+            System.out.println("Argument out of domain in logGammaCor().");
             return Double.NaN;
         }
-        else if (x >= xmax) {
-            System.out.println("Underflow occurred in lgammacor");
-            /* allow to underflow below */
+        else if (x >= x_max) {
+            System.out.println("Underflow occurred in logGammaCor().");
         }
-        else if (x < xbig) {
+        else if (x < x_big) {
             tmp = 10 / x;
-            return Chebyshev.chebyshev_eval(tmp * tmp * 2 - 1, algmcs, nalgm) / x;
+            return Chebyshev.chebyshev_eval(tmp * tmp * 2 - 1, cor, naLgm) / x;
         }
         return 1 / (x * 12);
     }

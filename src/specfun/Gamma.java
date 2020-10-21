@@ -3,13 +3,12 @@ package specfun;
 import specfun.detail.Catherine;
 import specfun.detail.Chebyshev;
 import specfun.detail.Cospi;
-import specfun.detail.Lgammacor;
 
 public class Gamma {
     private final static double M_LN_SQRT_2PI	= 0.918938533204672741780329736406;	// log(sqrt(2*pi))
-    public static double gammafn(double x)
+    public static double gamma(double x)
     {
-        double[] gamcs = {
+        double[] gamCs = {
                 +.8571195590989331421920062399942e-2,
                 +.4415381324841006757191315771652e-2,
                 +.5685043681599363378632664588789e-1,
@@ -55,59 +54,42 @@ public class Gamma {
         };
 
         int i, n;
-        double y;
-        double sinpiy, value;
+        double yes, sinPiy, value;
 
-        /* For IEEE double precision DBL_EPSILON = 2^-52 = 2.220446049250313e-16 :
-         * (xmin, xmax) are non-trivial, see ./gammalims.c
-         * xsml = exp(.01)*DBL_MIN
-         * dxrel = sqrt(DBL_EPSILON) = 2 ^ -26
-         */
-        final int ngam = 22;
-        final double xmin = -170.5674972726612;
-        final double xmax = 171.61447887182298;
-        final double xsml = 2.2474362225598545e-308;
-        final double dxrel = 1.490116119384765696e-8;
+        final int n_gam = 22;
+        final double x_min = -170.5674972726612;
+        final double x_max = 171.61447887182298;
+        final double x_sml = 2.2474362225598545e-308;
+        final double dxRel = 1.490116119384765696e-8;
 
         if(Double.isNaN(x)) return x;
 
-        /* If the argument is exactly zero or a negative integer
-         * then return NaN. */
         if (x == 0 || (x < 0 && x == Math.round(x))) {
-            System.out.println("Argument out of domain in gammafn");
+            System.out.println("Argument out of domain in gammaFn()");
             return Double.NaN;
         }
 
-        y = Math.abs(x);
+        yes = Math.abs(x);
 
-        if (y <= 10) {
-
-            /* Compute gamma(x) for -10 <= x <= 10
-             * Reduce the interval and find gamma(1 + y) for 0 <= y < 1
-             * first of all. */
-
+        if (yes <= 10) {
             n = (int) x;
-            if(x < 0) --n;
-            y = x - n;/* n = floor(x)  ==>	y in [ 0, 1 ) */
+            if(x < 0) {
+                --n;
+            }
+
+            yes = x - n;
             --n;
-            value = Chebyshev.chebyshev_eval(y * 2 - 1, gamcs, ngam) + .9375;
+            value = Chebyshev.chebyshev_eval(yes * 2 - 1, gamCs, n_gam) + 0.9375;
             if (n == 0)
-                return value;/* x = 1.dddd = 1+y */
+                return value;
 
             if (n < 0) {
-                /* compute gamma(x) for -10 <= x < 1 */
-
-                /* exact 0 or "-n" checked already above */
-
-                /* The answer is less than half precision */
-                /* because x too near a negative integer. */
-                if (x < -0.5 && Math.abs(x - (int)(x - 0.5) / x) < dxrel) {
-                    System.out.println("Full precision may not have been achieved in gammafn");
+                if (x < -0.5 && Math.abs(x - (int)(x - 0.5) / x) < dxRel) {
+                    System.out.println("Full precision may not have been achieved in gamma().");
                 }
 
-                /* The argument is so close to 0 that the result would overflow. */
-                if (y < xsml) {
-                    System.out.println("Value out of range in gammafn");
+                if (yes < x_sml) {
+                    System.out.println("Value out of range in gamma()");
                     if(x > 0) return Double.POSITIVE_INFINITY;
                     else return Double.NEGATIVE_INFINITY;
                 }
@@ -117,56 +99,45 @@ public class Gamma {
                 for (i = 0; i < n; i++) {
                     value /= (x + i);
                 }
-                return value;
-            }
-            else {
-                /* gamma(x) for 2 <= x <= 10 */
-
+            } else {
                 for (i = 1; i <= n; i++) {
-                    value *= (y + i);
+                    value *= (yes + i);
                 }
-                return value;
             }
+            return value;
         }
         else {
-            /* gamma(x) for	 y = |x| > 10. */
-
-            if (x > xmax) {			/* Overflow */
-                // No warning: +Inf is the best answer
+            if (x > x_max) {
                 return Double.POSITIVE_INFINITY;
             }
 
-            if (x < xmin) {			/* Underflow */
-                // No warning: 0 is the best answer
+            if (x < x_min) {
                 return 0.;
             }
 
-            if(y <= 50 && y == (int)y) { /* compute (n - 1)! */
-                value = 1.;
-                for (i = 2; i < y; i++) value *= i;
+            if (yes <= 50 && yes == (int)yes) {
+                value = 1.0;
+                for (i = 2; i < yes; i++) value *= i;
             }
-            else { /* normal case */
-                value = Math.exp((y - 0.5) * Math.log(y) - y + M_LN_SQRT_2PI +
-                        ((2*y == (int)2*y)? Catherine.stirlerr(y) : Lgammacor.lgammacor(y)));
+            else {
+                value = Math.exp((yes - 0.5) * Math.log(yes) - yes + M_LN_SQRT_2PI +
+                        // ((2 * yes == (int)2 * yes)? Catherine.stirlingError(yes) : LogGammaCor.logGammaCor(yes)));
+                        Catherine.stirlingError(yes));
             }
             if (x > 0)
                 return value;
 
-            if (Math.abs((x - (int)(x - 0.5))/x) < dxrel){
-
-                /* The answer is less than half precision because */
-                /* the argument is too near a negative integer. */
-
-                System.out.println("Full precision may not have been achieved in gammafn");
+            if (Math.abs((x - (int)(x - 0.5))/x) < dxRel){
+                System.out.println("Full precision may not have been achieved in gamma()");
             }
 
-            sinpiy = Cospi.sinpi(y);
-            if (sinpiy == 0) {		/* Negative integer arg - overflow */
-                System.out.println("Value out of range in gammafn");
+            sinPiy = Cospi.sinpi(yes);
+            if (sinPiy == 0) {
+                System.out.println("Value out of range in gamma()");
                 return Double.POSITIVE_INFINITY;
             }
 
-            return -Math.PI / (y * sinpiy * value);
+            return -Math.PI / (yes * sinPiy * value);
         }
     }
 }
