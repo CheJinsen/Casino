@@ -1,7 +1,5 @@
 package specfun.detail;
 
-import specfun.detail.Chebyshev;
-
 public class Lgammacor {
     public static double lgammacor(double x)
     {
@@ -33,7 +31,7 @@ public class Lgammacor {
         final double xmax = 3.745194030963158e306;
 
         if (x < 10) {
-            System.out.println("Argument out of domain lgammacor");
+            System.out.println("Argument out of domain in lgammacor");
             return Double.NaN;
         }
         else if (x >= xmax) {

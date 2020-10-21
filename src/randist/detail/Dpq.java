@@ -1,8 +1,9 @@
 package randist.detail;
 
 public class Dpq {
-    public final static double M_LN2 = 0.693147180559945309417232121458;	/* ln(2) */
+    public final static double M_LN2 = 0.693147180559945309417232121458;	// ln(2)
     public final static double DBL_EPSILON = 2.2204460492503131E-16;
+    public final static double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
 
     public static double nanWarn()
     {
@@ -187,7 +188,7 @@ public class Dpq {
 
     public static boolean nonInt(double x)
     {
-        return Math.abs((x) - Math.round(x)) > 1e-7 * Math.max(1.0, Math.abs(x));
+        return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1.0, Math.abs(x));
     }
 
     public static double nonIntCheck(double x, boolean log_p)

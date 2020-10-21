@@ -7,7 +7,6 @@ public class Catherine {
     public static double bd0(double x, double np)
     {
         double ej, s, s1, v;
-        int j;
 
         if(Double.isInfinite(x) || Double.isInfinite(np) || np == 0.0) {
             System.out.println("Argument out of domain in bd0.");
@@ -20,7 +19,7 @@ public class Catherine {
             if(Math.abs(s) < Double.MIN_VALUE) return s;
             ej = 2*x*v;
             v = v*v;
-            for (j = 1; j < 1000; j++) { /* Taylor series; 1000: no infinite loop
+            for (int j = 1; j < 1000; j++) { /* Taylor series; 1000: no infinite loop
 						as |v| < .1,  v^2000 is "zero" */
                 ej *= v;// = v^(2j+1)
                 s1 = s+ej/((j<<1)+1);
