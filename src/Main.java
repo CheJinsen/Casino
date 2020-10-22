@@ -1,5 +1,5 @@
-import randist.Beta;
-import specfun.Gamma;
+import distributions.Beta;
+import special_functions.Gamma;
 
 public class Main {
 
