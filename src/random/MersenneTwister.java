@@ -1,14 +1,14 @@
 /*
-  A C-program for MT19937, with initialization improved 2002/1/26.
-  Coded by Takuji Nishimura and Makoto Matsumoto.
+  A Java program for MT19937, with initialization improved 2002/1/26.
+  Coded by Takuji Nishimura and Makoto Matsumoto in C, Jinsen Che translate
+  to Java.
 
-  Before using, initialize the state by using initGenRand(seed)
-  or initByArray(init_key, key_length).
+  Before using, initialize the state by using initGenRand(seed) or
+  initByArray(init_key, key_length).
 
   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
   All rights reserved.
-  Copyright (C) 2005, Mutsuo Saito,
-  All rights reserved.
+  Copyright (C) 2005, Mutsuo Saito, All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions

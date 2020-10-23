@@ -2,8 +2,8 @@ package special_functions.detail;
 
 import special_functions.LogGamma;
 
-public class Catherine {
-
+public class Catherine
+{
     public static double bd0(double x, double np)
     {
         if(Double.isInfinite(x) || Double.isInfinite(np) || np == 0.0) {

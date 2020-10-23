@@ -1,6 +1,7 @@
 package special_functions.detail;
 
-public class Sign {
+public class Sign
+{
     public int val;
     public Sign(int x)
     {

@@ -3,7 +3,8 @@ package special_functions;
 import distributions.detail.Dpq;
 import special_functions.detail.LogGammaCor;
 
-public class Beta {
+public class Beta
+{
     public static double logBeta(double a, double b)
     {
         if (Double.isNaN(a) || Double.isNaN(b)) {

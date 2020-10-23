@@ -1,13 +1,15 @@
 package distributions.detail;
 
-public class Dpq {
+public class Dpq
+{
     public final static double M_LN2 = 0.693147180559945309417232121458;	// ln(2)
     public final static double DBL_EPSILON = 2.2204460492503131E-16;
     public final static double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
 
     public static double nanWarn()
     {
-        System.out.println("Argument out of domain.");
+        System.out.println("Warning: argument out of domain in " +
+            Thread.currentThread().getStackTrace()[2].getMethodName() + "().");
         return Double.NaN;
     }
 
@@ -128,18 +130,22 @@ public class Dpq {
         return lower_tail ? p : log1Exp(p);
     }
 
+    // do not use
     public static double QP01Check(double p, boolean log_p)
     {
-        if ((log_p && p > 0) || (!log_p && (p < 0 || p > 1)))
-            return Double.NaN;
+        if ((log_p && p > 0) || (!log_p && (p < 0 || p > 1))) {
+            return nanWarn();
+        }
         return 0.0;
     }
 
+    // do not use
     public static double QP01Boundaries(double p, double l, double r, boolean lower_tail, boolean log_p)
     {
         if (log_p) {
-            if (p > 0)
-                return Double.NaN;
+            if (p > 0) {
+                return nanWarn();
+            }
             if (p == 0) {
                 return lower_tail ? r : l;
             }
@@ -147,8 +153,9 @@ public class Dpq {
                 return lower_tail ? l : r;
             }
         } else {
-            if (p < 0 || p > 1)
-                return Double.NaN;
+            if (p < 0 || p > 1) {
+                return nanWarn();
+            }
             if (p == 0) {
                 return lower_tail ? l : r;
             }
@@ -159,6 +166,7 @@ public class Dpq {
         return 0.0;
     }
 
+    // do not use
     public static double pBounds01(double x, double xMin, double xMax, boolean lower_tail, boolean log_p)
     {
         if (x <= xMin)  return DT0(lower_tail, log_p);
@@ -166,6 +174,7 @@ public class Dpq {
         return 0.0;
     }
 
+    // do not use
     public static double pBoundsInf01(double x, boolean lower_tail, boolean log_p)
     {
         if (Double.isInfinite(x)) {

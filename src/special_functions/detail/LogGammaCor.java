@@ -1,6 +1,7 @@
 package special_functions.detail;
 
-public class LogGammaCor {
+public class LogGammaCor
+{
     public static double logGammaCor(double x)
     {
         double[] cor = {

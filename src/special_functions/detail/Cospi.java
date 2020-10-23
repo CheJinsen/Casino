@@ -1,6 +1,7 @@
 package special_functions.detail;
 
-public class Cospi {
+public class Cospi
+{
     // sin(pi * x)  -- exact when x = k/2  for all integer k
     public static double sinpi(double x) {
         if (Double.isNaN(x)) return x;

@@ -2,7 +2,8 @@ package distributions;
 
 import distributions.detail.*;
 
-public class Beta {
+public class Beta
+{
     public static double cdf(double x, double a, double b, boolean lower_tail, boolean log_p)
     {
         if (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b)) {

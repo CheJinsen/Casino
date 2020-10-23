@@ -1,6 +1,7 @@
 package special_functions.detail;
 
-public class Chebyshev {
+public class Chebyshev
+{
     public static int chebyshev_init(double[] dos, int nos, double eta)
     {
         int i, ii;

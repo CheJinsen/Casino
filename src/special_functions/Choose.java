@@ -5,7 +5,8 @@ import special_functions.detail.Sign;
 import java.math.BigDecimal;
 import java.math.MathContext;
 
-public class Choose {
+public class Choose
+{
     public static double choose(double n, double k)
     {
         double r, k0 = k;

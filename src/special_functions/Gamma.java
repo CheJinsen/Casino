@@ -4,7 +4,8 @@ import special_functions.detail.Catherine;
 import special_functions.detail.Chebyshev;
 import special_functions.detail.Cospi;
 
-public class Gamma {
+public class Gamma
+{
     private final static double M_LN_SQRT_2PI	= 0.918938533204672741780329736406;	// log(sqrt(2*pi))
     public static double gamma(double x)
     {
