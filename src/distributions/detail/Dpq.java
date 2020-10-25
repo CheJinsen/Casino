@@ -8,8 +8,9 @@ public class Dpq
 
     public static double nanWarn()
     {
-        System.out.println("Warning: argument out of domain in " +
-            Thread.currentThread().getStackTrace()[2].getMethodName() + "().");
+        String class_name = Thread.currentThread().getStackTrace()[2].getClassName();
+        System.out.println("Warning: argument out of domain in " + class_name + "." +
+            Thread.currentThread().getStackTrace()[2].getMethodName() + "()");
         return Double.NaN;
     }
 
