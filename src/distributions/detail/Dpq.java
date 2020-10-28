@@ -131,7 +131,7 @@ public class Dpq
         return lower_tail ? p : log1Exp(p);
     }
 
-    // do not use
+    @Deprecated
     public static double QP01Check(double p, boolean log_p)
     {
         if ((log_p && p > 0) || (!log_p && (p < 0 || p > 1))) {
@@ -140,7 +140,7 @@ public class Dpq
         return 0.0;
     }
 
-    // do not use
+    @Deprecated
     public static double QP01Boundaries(double p, double l, double r, boolean lower_tail, boolean log_p)
     {
         if (log_p) {
@@ -167,7 +167,7 @@ public class Dpq
         return 0.0;
     }
 
-    // do not use
+    @Deprecated
     public static double pBounds01(double x, double xMin, double xMax, boolean lower_tail, boolean log_p)
     {
         if (x <= xMin)  return DT0(lower_tail, log_p);
@@ -175,7 +175,7 @@ public class Dpq
         return 0.0;
     }
 
-    // do not use
+    @Deprecated
     public static double pBoundsInf01(double x, boolean lower_tail, boolean log_p)
     {
         if (Double.isInfinite(x)) {
@@ -187,8 +187,7 @@ public class Dpq
 
     public static double DFExp(double f, double x, boolean give_log)
     {
-        if (give_log)   return -0.5 * Math.log(f) + x;
-        else            return Math.exp(x) / Math.sqrt(f);
+        return give_log ? (-0.5 * Math.log(f) + x) : (Math.exp(x) / Math.sqrt(f));
     }
 
     public static boolean negINonInt(double x)

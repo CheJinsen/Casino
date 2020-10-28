@@ -3,58 +3,58 @@ package distributions.detail;
 
 public class Toms
 {
-    public static void bratio(double a, double b, double x, double y,
-                              RefDouble w, RefDouble w1, RefInt ierr, boolean log_p)
+    public static void betaRatio(double a, double b, double x, double y,
+                                 RefDouble w, RefDouble w1, RefInt i_err, boolean log_p)
     {
         boolean do_swap;
         int n = 0;
         double a0, b0, x0, y0, lambda;
-        RefInt ierr1 = new RefInt(0);
+        RefInt i_err1 = new RefInt(0);
 
         double eps = 2.0 * 0.5 * Dpq.DBL_EPSILON;
 
         w.val = Dpq.D0(log_p);
         w1.val = Dpq.D0(log_p);
         if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(a) || Double.isNaN(b)) {
-            ierr.val = 9;
+            i_err.val = 9;
             return;
         }
 
         if (a < 0.0 || b < 0.0) {
-            ierr.val = 1;
+            i_err.val = 1;
             return;
         }
         if (a == 0.0 || b == 0.0) {
-            ierr.val = 2;
+            i_err.val = 2;
             return;
         }
         if (x < 0.0 || x > 1.0) {
-            ierr.val = 3;
+            i_err.val = 3;
             return;
         }
         if (y < 0.0 || y > 1.0) {
-            ierr.val = 4;
+            i_err.val = 4;
             return;
         }
 
         double z = x + y - 0.5 - 0.5;
 
         if (Math.abs(z) > eps * 3.0) {
-            ierr.val = 5;
+            i_err.val = 5;
             return;
         }
 
-        ierr.val = 0;
+        i_err.val = 0;
         if (x == 0.0) {
             if (a == 0.0) {
-                ierr.val = 6;
+                i_err.val = 6;
                 return;
             }
         }
 
         if (y == 0.0) {
             if (b == 0.0) {
-                ierr.val = 7;
+                i_err.val = 7;
                 return;
             }
         }
@@ -167,16 +167,16 @@ public class Toms
                 if (b0 > 15.0) {
                     w1.val = 0.0;
                     // L131
-                    bgrat(b0, a0, y0, x0, w1, 15 * eps, ierr1, false);
+                    bgrat(b0, a0, y0, x0, w1, 15 * eps, i_err1, false);
                     if (w1.val == 0.0 || (0.0 < w1.val && w1.val < Double.MIN_VALUE)) {
                         if (did_bup) {
                             w1.val = bup(b0 - n, a0, y0, x0, n, eps, true);
                         } else {
                             w1.val = Double.NEGATIVE_INFINITY;
                         }
-                        bgrat(b0, a0, y0, x0, w1, 15 * eps, ierr1, true);
-                        if (ierr1.val != 0) {
-                            ierr.val = 10 + ierr1.val;
+                        bgrat(b0, a0, y0, x0, w1, 15 * eps, i_err1, true);
+                        if (i_err1.val != 0) {
+                            i_err.val = 10 + i_err1.val;
                         }
                         // L_end_from w1_log
                         if (log_p) {
@@ -191,8 +191,8 @@ public class Toms
                             w1.val = t;
                         }
                     }
-                    if (ierr1.val != 0) {
-                        ierr.val = 10 + ierr1.val;
+                    if (i_err1.val != 0) {
+                        i_err.val = 10 + i_err1.val;
                     }
                     if (w1.val < 0.0) {
                         System.out.printf("bratio(a=%g, b=%g, x=%g): bgrat() -> w1 = %g", a, b, x, w1.val);
@@ -251,16 +251,16 @@ public class Toms
             did_bup = true;
             b0 += n;
             // L131
-            bgrat(b0, a0, y0, x0, w1, 15 * eps, ierr1, false);
+            bgrat(b0, a0, y0, x0, w1, 15 * eps, i_err1, false);
             if (w1.val == 0.0 || (0.0 < w1.val && w1.val < Double.MIN_VALUE)) {
                 if (did_bup) {
                     w1.val = bup(b0 - n, a0, y0, x0, n, eps, true);
                 } else {
                     w1.val = Double.NEGATIVE_INFINITY;
                 }
-                bgrat(b0, a0, y0, x0, w1, 15 * eps, ierr1, true);
-                if (ierr1.val != 0) {
-                    ierr.val = 10 + ierr1.val;
+                bgrat(b0, a0, y0, x0, w1, 15 * eps, i_err1, true);
+                if (i_err1.val != 0) {
+                    i_err.val = 10 + i_err1.val;
                 }
                 // L_end_from w1_log
                 if (log_p) {
@@ -275,8 +275,8 @@ public class Toms
                     w1.val = t;
                 }
             }
-            if (ierr1.val != 0) {
-                ierr.val = 10 + ierr1.val;
+            if (i_err1.val != 0) {
+                i_err.val = 10 + i_err1.val;
             }
             if (w1.val < 0.0) {
                 System.out.printf("bratio(a=%g, b=%g, x=%g): bgrat() -> w1 = %g", a, b, x, w1.val);
@@ -362,9 +362,9 @@ public class Toms
                         a0 += n;
                     }
 
-                    bgrat(a0, b0, x0, y0, w, 15 * eps, ierr1, false);
-                    if (ierr1.val != 0) {
-                        ierr.val = 10 + ierr1.val;
+                    bgrat(a0, b0, x0, y0, w, 15 * eps, i_err1, false);
+                    if (i_err1.val != 0) {
+                        i_err.val = 10 + i_err1.val;
                     }
                     if (log_p) {
                         w1.val = Math.log1p(-w.val);
@@ -1190,7 +1190,7 @@ public class Toms
         /*                    ADD THE RESULTS TO W */
 
         if(log_w) // *w is in log space already:
-            w.val = logspace_add(w.val, log_u + Math.log(sum));
+            w.val = logSpaceAdd(w.val, log_u + Math.log(sum));
         else
             w.val += (u_0 ? Math.exp(log_u + Math.log(sum)) : u * sum);
         return;
@@ -2007,9 +2007,9 @@ public class Toms
                 //                    		A < 1
                 /* ----------------------------------------------------------------------- */
                 if (b < 8.)
-                    return gamln(a) + (gamln(b) - gamln(a+b));
+                    return gammaLn(a) + (gammaLn(b) - gammaLn(a+b));
                 else
-                    return gamln(a) + algdiv(a, b);
+                    return gammaLn(a) + algdiv(a, b);
             }
             /* else */
             /* ----------------------------------------------------------------------- */
@@ -2019,7 +2019,7 @@ public class Toms
             int n;
             if (a < 2.) {
                 if (b <= 2.) {
-                    return gamln(a) + gamln(b) - gsumln(a, b);
+                    return gammaLn(a) + gammaLn(b) - gsumln(a, b);
                 }
                 /* else */
 
@@ -2031,9 +2031,9 @@ public class Toms
                         b += -1.;
                         z *= b / (a + b);
                     }
-                    return w + Math.log(z) + (gamln(a) + (gamln(b) - gsumln(a, b)));
+                    return w + Math.log(z) + (gammaLn(a) + (gammaLn(b) - gsumln(a, b)));
                 }
-                return gamln(a) + algdiv(a, b);
+                return gammaLn(a) + algdiv(a, b);
             }
             // else L30:    REDUCTION OF A WHEN B <= 1000
 
@@ -2048,7 +2048,7 @@ public class Toms
                 w = Math.log(w);
 
                 if (b >= 8.)
-                    return w + gamln(a) + algdiv(a, b);
+                    return w + gammaLn(a) + algdiv(a, b);
 
                 // else
                 // L40:
@@ -2059,7 +2059,7 @@ public class Toms
                     b += -1.;
                     z *= b / (a + b);
                 }
-                return w + Math.log(z) + (gamln(a) + (gamln(b) - gsumln(a, b)));
+                return w + Math.log(z) + (gammaLn(a) + (gammaLn(b) - gsumln(a, b)));
             }
             else { // L50:	reduction of A when  B > 1000
                 n = (int)(a - 1.);
@@ -2068,7 +2068,7 @@ public class Toms
                     a += -1.;
                     w *= a / (a / b + 1.);
                 }
-                return Math.log(w) - n * Math.log(b) + (gamln(a) + algdiv(a, b));
+                return Math.log(w) - n * Math.log(b) + (gammaLn(a) + algdiv(a, b));
             }
 
         } else {
@@ -2228,9 +2228,9 @@ public class Toms
             return w - v - u;
         else
             return w - u - v;
-    } /* algdiv */
+    }
 
-    private static double gamln(double a)
+    private static double gammaLn(double a)
     {
         /* -----------------------------------------------------------------------
          *            Evaluation of  ln(gamma(a))  for positive a
@@ -2240,39 +2240,39 @@ public class Toms
         /*          Dahlgren, Virginia */
         /* ----------------------------------------------------------------------- */
 
-        final double d = .418938533204673;/* d == 0.5*(LN(2*PI) - 1) */
+        final double d = 0.418938533204673;/* d == 0.5*(LN(2*PI) - 1) */
 
-        final double c0 = .0833333333333333;
-        final double c1 = -.00277777777760991;
+        final double c0 = 0.0833333333333333;
+        final double c1 = -0.00277777777760991;
         final double c2 = 7.9365066682539e-4;
         final double c3 = -5.9520293135187e-4;
         final double c4 = 8.37308034031215e-4;
-        final double c5 = -.00165322962780713;
+        final double c5 = -0.00165322962780713;
 
         if (a <= 0.8)
             return gamln1(a) - Math.log(a); /* ln(G(a+1)) - ln(a) == ln(G(a+1)/a) = ln(G(a)) */
         else if (a <= 2.25)
             return gamln1(a - 0.5 - 0.5);
 
-        else if (a < 10.) {
-            int i, n = (int)(a - 1.25);
+        else if (a < 10.0) {
+            int n = (int)(a - 1.25);
             double t = a;
-            double w = 1.;
-            for (i = 1; i <= n; ++i) {
-                t += -1.;
+            double w = 1.0;
+            for (int i = 1; i <= n; ++i) {
+                t += -1.0;
                 w *= t;
             }
-            return gamln1(t - 1.) + Math.log(w);
+            return gamln1(t - 1.0) + Math.log(w);
         }
         else { /* a >= 10 */
-            double t = 1. / (a * a);
+            double t = 1.0 / (a * a);
             double w = (((((c5 * t + c4) * t + c3) * t + c2) * t + c1) * t + c0) / a;
-            return d + w + (a - 0.5) * (Math.log(a) - 1.);
+            return d + w + (a - 0.5) * (Math.log(a) - 1.0);
         }
-    } /* gamln */
+    }
 
-    private static double logspace_add (double logx, double logy)
+    private static double logSpaceAdd(double log_x, double log_y)
     {
-        return Math.max(logx, logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
+        return Math.max(log_x, log_y) + Math.log1p(Math.exp(-Math.abs(log_x - log_y)));
     }
 }

@@ -42,7 +42,7 @@ public class Beta
         RefDouble w = new RefDouble(0.0);
         RefDouble wc = new RefDouble(0.0);
 
-        Toms.bratio(a, b, x, x1, w, wc, ierr, log_p);
+        Toms.betaRatio(a, b, x, x1, w, wc, ierr, log_p);
         if (ierr.val != 0 && ierr.val != 11 && ierr.val != 14) {
             System.out.printf("Beta.cdfRaw(%g, a = %g, b = %g, ..) -> bratio() gave error code %d", x, a, b, ierr.val);
         }
