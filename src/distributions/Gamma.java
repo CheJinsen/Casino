@@ -2,6 +2,8 @@ package distributions;
 
 import distributions.detail.DistBase;
 import distributions.detail.Dpq;
+import random.NormalRand;
+import random.UniformRand;
 import special_functions.LogGamma;
 
 public class Gamma extends DistBase
@@ -235,15 +237,15 @@ public class Gamma extends DistBase
             }
 
             t = p2 * Math.exp(alpha * Dpq.M_LN2 + g + p1 - c * Math.log(ch));
-            b = t/ch;
-            a = 0.5*t - b*c;
-            s1 = (210+ a*(140+a*(105+a*(84+a*(70+60*a))))) * i420;
-            s2 = (420+ a*(735+a*(966+a*(1141+1278*a)))) * i2520;
-            s3 = (210+ a*(462+a*(707+932*a))) * i2520;
-            s4 = (252+ a*(672+1182*a) + c*(294+a*(889+1740*a))) * i5040;
-            s5 = (84+2264*a + c*(1175+606*a)) * i2520;
+            b = t / ch;
+            a = 0.5 * t - b * c;
+            s1 = (210 + a * (140 + a * (105 + a * (84 + a * (70 + 60 * a))))) * i420;
+            s2 = (420 + a * (735 + a * (966 + a * (1141 + 1278 * a)))) * i2520;
+            s3 = (210 + a * (462 + a * (707 + 932 * a))) * i2520;
+            s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) * i5040;
+            s5 = (84 + 2264 * a + c * (1175 + 606 * a)) * i2520;
 
-            ch += t*(1+0.5*t*s1-b*c*(s1-b*(s2-b*(s3-b*(s4-b*(s5-b*s6))))));
+            ch += t * (1 + 0.5 * t * s1 - b * c * (s1 - b * (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))));
 
             if (Math.abs(q - ch) < EPS2 * ch) {
                 break;
@@ -295,6 +297,223 @@ public class Gamma extends DistBase
             x = t;
         }
         return x;
+    }
+
+    public static double rand(double a, double scale)
+    {
+        final double sqrt32 = 5.656854;
+        final double exp_m1 = 0.36787944117144232159;/* exp(-1) = 1/e */
+
+        /*
+         * Coefficients q[k] - for q0 = sum(q[k]*a^(-k))
+         * Coefficients a[k] - for q = q0+(t*t/2)*sum(a[k]*v^k)
+         * Coefficients e[k] - for exp(q)-1 = sum(e[k]*q^k)
+         */
+        final double q1 = 0.04166669;
+        final double q2 = 0.02083148;
+        final double q3 = 0.00801191;
+        final double q4 = 0.00144121;
+        final double q5 = -7.388e-5;
+        final double q6 = 2.4511e-4;
+        final double q7 = 2.424e-4;
+
+        final double a1 = 0.3333333;
+        final double a2 = -0.250003;
+        final double a3 = 0.2000062;
+        final double a4 = -0.1662921;
+        final double a5 = 0.1423657;
+        final double a6 = -0.1367177;
+        final double a7 = 0.1233795;
+
+        double aa = 0.0;
+        double aaa = 0.0;
+        double s = 0.0, s2 = 0.0, d = 0.0;    /* no. 1 (step 1) */
+        double q0 = 0.0, b = 0.0, si = 0.0, c = 0.0;/* no. 2 (step 4) */
+
+        double e, p, q, r, t, u, v, w, x, ret_val;
+
+        if (Double.isNaN(a) || Double.isNaN(scale)) {
+            return Dpq.nanWarn();
+        }
+        if (a <= 0.0 || scale <= 0.0) {
+            if(scale == 0.0 || a == 0.0) {
+                return 0.0;
+            }
+            return Dpq.nanWarn();
+        }
+        if(Double.isInfinite(a) || Double.isInfinite(scale)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if (a < 1.0) {
+            e = 1.0 + exp_m1 * a;
+            for(;;) {
+                p = e * UniformRand.rand();
+                if (p >= 1.0) {
+                    x = -Math.log((e - p) / a);
+                    if (expRand() >= (1.0 - a) * Math.log(x))
+                        break;
+                } else {
+                    x = Math.exp(Math.log(p) / a);
+                    if (expRand() >= x)
+                        break;
+                }
+            }
+            return scale * x;
+        }
+
+        /* --- a >= 1 : GD algorithm --- */
+
+        /* Step 1: Recalculations of s2, s, d if a has changed */
+        if (a != aa) {
+            aa = a;
+            s2 = a - 0.5;
+            s = Math.sqrt(s2);
+            d = sqrt32 - s * 12.0;
+        }
+    /* Step 2: t = standard normal deviate,
+               x = (s,1/2) -normal deviate. */
+
+        /* immediate acceptance (i) */
+        t = NormalRand.rand();
+        x = s + 0.5 * t;
+        ret_val = x * x;
+        if (t >= 0.0)
+            return scale * ret_val;
+
+        /* Step 3: u = 0,1 - uniform sample. squeeze acceptance (s) */
+        u = UniformRand.rand();
+        if (d * u <= t * t * t)
+            return scale * ret_val;
+
+        /* Step 4: recalculations of q0, b, si, c if necessary */
+
+        if (a != aaa) {
+            aaa = a;
+            r = 1.0 / a;
+            q0 = ((((((q7 * r + q6) * r + q5) * r + q4) * r + q3) * r
+                    + q2) * r + q1) * r;
+
+            /* Approximation depending on size of parameter a */
+            /* The constants in the expressions for b, si and c */
+            /* were established by numerical experiments */
+
+            if (a <= 3.686) {
+                b = 0.463 + s + 0.178 * s2;
+                si = 1.235;
+                c = 0.195 / s - 0.079 + 0.16 * s;
+            } else if (a <= 13.022) {
+                b = 1.654 + 0.0076 * s2;
+                si = 1.68 / s + 0.275;
+                c = 0.062 / s + 0.024;
+            } else {
+                b = 1.77;
+                si = 0.75;
+                c = 0.1515 / s;
+            }
+        }
+        /* Step 5: no quotient test if x not positive */
+
+        if (x > 0.0) {
+            /* Step 6: calculation of v and quotient q */
+            v = t / (s + s);
+            if (Math.abs(v) <= 0.25)
+                q = q0 + 0.5 * t * t * ((((((a7 * v + a6) * v + a5) * v + a4) * v
+                        + a3) * v + a2) * v + a1) * v;
+            else
+                q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
+
+
+            /* Step 7: quotient acceptance (q) */
+            if (Math.log(1.0 - u) <= q)
+                return scale * ret_val;
+        }
+
+        for(;;) {
+            /* Step 8: e = standard exponential deviate
+             *	u =  0,1 -uniform deviate
+             *	t = (b,si)-double exponential (laplace) sample */
+            e = expRand();
+            u = UniformRand.rand();
+            u = u + u - 1.0;
+            if (u < 0.0)
+                t = b - si * e;
+            else
+                t = b + si * e;
+            /* Step	 9:  rejection if t < tau(1) = -0.71874483771719 */
+            if (t >= -0.71874483771719) {
+                /* Step 10:	 calculation of v and quotient q */
+                v = t / (s + s);
+                if (Math.abs(v) <= 0.25)
+                    q = q0 + 0.5 * t * t *
+                            ((((((a7 * v + a6) * v + a5) * v + a4) * v + a3) * v
+                                    + a2) * v + a1) * v;
+                else
+                    q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
+                /* Step 11:	 hat acceptance (h) */
+                /* (if q not positive go to step 8) */
+                if (q > 0.0) {
+                    w = Math.expm1(q);
+                    /*  ^^^^^ original code had approximation with rel.err < 2e-7 */
+                    /* if t is rejected sample again at step 8 */
+                    if (c * Math.abs(u) <= w * Math.exp(e - 0.5 * t * t))
+                        break;
+                }
+            }
+        } /* repeat .. until  `t' is accepted */
+        x = s + 0.5 * t;
+        return scale * x * x;
+    }
+
+    private static double expRand()
+    {
+        double[] q = {
+            0.6931471805599453,
+            0.9333736875190459,
+            0.9888777961838675,
+            0.9984959252914960,
+            0.9998292811061389,
+            0.9999833164100727,
+            0.9999985691438767,
+            0.9999998906925558,
+            0.9999999924734159,
+            0.9999999995283275,
+            0.9999999999728814,
+            0.9999999999985598,
+            0.9999999999999289,
+            0.9999999999999968,
+            0.9999999999999999,
+            1.0000000000000000
+        };
+
+        double a = 0.0;
+        double u = UniformRand.rand();
+
+        while (u <= 0.0 || u >= 1.0) {
+            u = UniformRand.rand();
+        }
+        for (;;) {
+            u += u;
+            if (u > 1.0)
+                break;
+            a += q[0];
+        }
+
+        u -= 1.0;
+        if (u <= q[0]) {
+            return a + u;
+        }
+
+        int i = 0;
+        double uStar = UniformRand.rand();
+        double uMin = uStar;
+        do {
+            uStar = UniformRand.rand();
+            if (uMin > uStar)
+                uMin = uStar;
+            i++;
+        } while (u > q[i]);
+        return a + uMin * q[0];
     }
 
     private static double logCF(double x, double i, double d, double eps)
@@ -749,7 +968,7 @@ public class Gamma extends DistBase
         }
     }
 
-    public static double quantileChisApp(double p, double nu, double g,
+    private static double quantileChisApp(double p, double nu, double g,
                                          boolean lower_tail, boolean log_p, double tol)
     {
         final double C7	= 4.67;
@@ -808,6 +1027,7 @@ public class Gamma extends DistBase
         System.out.println(pdf(4, 1, 1));
 
         System.out.println(cdf(0.987, 1, 2));
-        System.out.println("result: " + quantile(0.975, 10, 20));
+        System.out.println(quantile(0.975, 10, 20));
+        System.out.println(rand(1.0, 2.0));
     }
 }
