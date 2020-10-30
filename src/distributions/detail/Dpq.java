@@ -2,9 +2,10 @@ package distributions.detail;
 
 public class Dpq
 {
-    public final static double M_LN2 = 0.693147180559945309417232121458;	// ln(2)
-    public final static double DBL_EPSILON = 2.2204460492503131E-16;
-    public final static double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
+    public static final double M_LN2 = 0.693147180559945309417232121458;	// ln(2)
+    public static final double DBL_EPSILON = 2.2204460492503131E-16;
+    public static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
+    public static final double M_LN_2PI = 1.837877066409345483560659472811;	// log(2*pi)
 
     public static double nanWarn()
     {
