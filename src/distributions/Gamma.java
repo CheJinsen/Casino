@@ -83,7 +83,7 @@ public class Gamma extends DistBase
         final double EPS1 = 1E-2;
         final double EPS2 = 5E-7;
         final double EPS_N = 1E-15;
-        final double LN_EPS = -36.043653389117156;
+        //final double LN_EPS = -36.043653389117156;
         final double MAX_IT = 1000;
         final double pMIN = 1e-100;
         final double pMAX = 1.0 - 1e-14;
@@ -127,7 +127,7 @@ public class Gamma extends DistBase
 
         p_ = Dpq.DTqIv(p, lower_tail, log_p);
         g = LogGamma.logGamma(alpha);
-        ch = quantileChisApp(p, 2.0 * alpha, g, lower_tail, log_p);
+        ch = quantileChisApp(p, 2.0 * alpha, g, lower_tail, log_p, EPS1);
 
         if (Double.isInfinite(ch)) {
             return 0.5 * scale * ch;
@@ -167,9 +167,9 @@ public class Gamma extends DistBase
                     break;
                 }
 
-                t = p1 * Math.exp(p_ - g);
+                t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
                 t = lower_tail ? x - t : x + t;
-                p_ = cdf(t, alpha, scale, lower_tail, true);
+                p_ = cdf(t, alpha, scale, lower_tail, log_p);
                 if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                     break;
                 }
@@ -189,12 +189,12 @@ public class Gamma extends DistBase
                 final double _1_p = 1.0 + 1e-7;
                 final double _1_m = 1.0 - 1e-7;
                 x = Double.MIN_VALUE;
-                p_ = cdf(x, alpha, scale, lower_tail, true);
+                p_ = cdf(x, alpha, scale, lower_tail, log_p);
                 if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
                     return 0.0;
                 }
             } else {
-                p_ = cdf(x, alpha, scale, lower_tail, true);
+                p_ = cdf(x, alpha, scale, lower_tail, log_p);
             }
 
             if (p_ == Double.NEGATIVE_INFINITY) {
@@ -212,9 +212,9 @@ public class Gamma extends DistBase
                     break;
                 }
 
-                t = p1 * Math.exp(p_ - g);
+                t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
                 t = lower_tail ? x - t : x + t;
-                p_ = cdf(t, alpha, scale, lower_tail, true);
+                p_ = cdf(t, alpha, scale, lower_tail, log_p);
                 if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                     break;
                 }
@@ -265,12 +265,12 @@ public class Gamma extends DistBase
             final double _1_p = 1.0 + 1e-7;
             final double _1_m = 1.0 - 1e-7;
             x = Double.MIN_VALUE;
-            p_ = cdf(x, alpha, scale, lower_tail, true);
+            p_ = cdf(x, alpha, scale, lower_tail, log_p);
             if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
                 return 0.0;
             }
         } else {
-            p_ = cdf(x, alpha, scale, lower_tail, true);
+            p_ = cdf(x, alpha, scale, lower_tail, log_p);
         }
 
         if (p_ == Double.NEGATIVE_INFINITY) {
@@ -288,9 +288,9 @@ public class Gamma extends DistBase
                 break;
             }
 
-            t = p1 * Math.exp(p_ - g);
+            t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
             t = lower_tail ? x - t : x + t;
-            p_ = cdf(t, alpha, scale, lower_tail, true);
+            p_ = cdf(t, alpha, scale, lower_tail, log_p);
             if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                 break;
             }
@@ -362,27 +362,41 @@ public class Gamma extends DistBase
             return scale * x;
         }
 
+        /* --- a >= 1 : GD algorithm --- */
+
+        /* Step 1: Recalculations of s2, s, d if a has changed */
         if (a != aa) {
             aa = a;
             s2 = a - 0.5;
             s = Math.sqrt(s2);
             d = sqrt32 - s * 12.0;
         }
+    /* Step 2: t = standard normal deviate,
+               x = (s,1/2) -normal deviate. */
 
+        /* immediate acceptance (i) */
         t = NormalRand.rand();
         x = s + 0.5 * t;
         ret_val = x * x;
         if (t >= 0.0)
             return scale * ret_val;
 
+        /* Step 3: u = 0,1 - uniform sample. squeeze acceptance (s) */
         u = UniformRand.rand();
         if (d * u <= t * t * t)
             return scale * ret_val;
 
+        /* Step 4: recalculations of q0, b, si, c if necessary */
 
         if (a != aaa) {
+            aaa = a;
             r = 1.0 / a;
-            q0 = ((((((q7 * r + q6) * r + q5) * r + q4) * r + q3) * r + q2) * r + q1) * r;
+            q0 = ((((((q7 * r + q6) * r + q5) * r + q4) * r + q3) * r
+                    + q2) * r + q1) * r;
+
+            /* Approximation depending on size of parameter a */
+            /* The constants in the expressions for b, si and c */
+            /* were established by numerical experiments */
 
             if (a <= 3.686) {
                 b = 0.463 + s + 0.178 * s2;
@@ -398,22 +412,27 @@ public class Gamma extends DistBase
                 c = 0.1515 / s;
             }
         }
+        /* Step 5: no quotient test if x not positive */
 
         if (x > 0.0) {
+            /* Step 6: calculation of v and quotient q */
             v = t / (s + s);
-            if (Math.abs(v) <= 0.25) {
+            if (Math.abs(v) <= 0.25)
                 q = q0 + 0.5 * t * t * ((((((a7 * v + a6) * v + a5) * v + a4) * v
                         + a3) * v + a2) * v + a1) * v;
-            } else {
+            else
                 q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
-            }
 
-            if (Math.log(1.0 - u) <= q) {
+
+            /* Step 7: quotient acceptance (q) */
+            if (Math.log(1.0 - u) <= q)
                 return scale * ret_val;
-            }
         }
 
         for(;;) {
+            /* Step 8: e = standard exponential deviate
+             *	u =  0,1 -uniform deviate
+             *	t = (b,si)-double exponential (laplace) sample */
             e = expRand();
             u = UniformRand.rand();
             u = u + u - 1.0;
@@ -421,7 +440,9 @@ public class Gamma extends DistBase
                 t = b - si * e;
             else
                 t = b + si * e;
+            /* Step	 9:  rejection if t < tau(1) = -0.71874483771719 */
             if (t >= -0.71874483771719) {
+                /* Step 10:	 calculation of v and quotient q */
                 v = t / (s + s);
                 if (Math.abs(v) <= 0.25)
                     q = q0 + 0.5 * t * t *
@@ -429,14 +450,17 @@ public class Gamma extends DistBase
                                     + a2) * v + a1) * v;
                 else
                     q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
-
+                /* Step 11:	 hat acceptance (h) */
+                /* (if q not positive go to step 8) */
                 if (q > 0.0) {
                     w = Math.expm1(q);
+                    /*  ^^^^^ original code had approximation with rel.err < 2e-7 */
+                    /* if t is rejected sample again at step 8 */
                     if (c * Math.abs(u) <= w * Math.exp(e - 0.5 * t * t))
                         break;
                 }
             }
-        }
+        } /* repeat .. until  `t' is accepted */
         x = s + 0.5 * t;
         return scale * x * x;
     }
@@ -444,22 +468,22 @@ public class Gamma extends DistBase
     private static double expRand()
     {
         double[] q = {
-            0.6931471805599453,
-            0.9333736875190459,
-            0.9888777961838675,
-            0.9984959252914960,
-            0.9998292811061389,
-            0.9999833164100727,
-            0.9999985691438767,
-            0.9999998906925558,
-            0.9999999924734159,
-            0.9999999995283275,
-            0.9999999999728814,
-            0.9999999999985598,
-            0.9999999999999289,
-            0.9999999999999968,
-            0.9999999999999999,
-            1.0000000000000000
+                0.6931471805599453,
+                0.9333736875190459,
+                0.9888777961838675,
+                0.9984959252914960,
+                0.9998292811061389,
+                0.9999833164100727,
+                0.9999985691438767,
+                0.9999998906925558,
+                0.9999999924734159,
+                0.9999999995283275,
+                0.9999999999728814,
+                0.9999999999985598,
+                0.9999999999999289,
+                0.9999999999999968,
+                0.9999999999999999,
+                1.0000000000000000
         };
 
         double a = 0.0;
@@ -492,7 +516,7 @@ public class Gamma extends DistBase
         return a + uMin * q[0];
     }
 
-    private static double logCF(double x, double i, double d)
+    private static double logCF(double x, double i, double d, double eps)
     {
         double c1 = 2 * d;
         double c2 = i + d;
@@ -505,7 +529,7 @@ public class Gamma extends DistBase
 
         b2 = c4 * b1 - i * b2;
 
-        while (Math.abs(a2 * b1 - a1 * b2) > Math.abs(1.0E-14 * b1 * b2)) {
+        while (Math.abs(a2 * b1 - a1 * b2) > Math.abs(eps * b1 * b2)) {
             double c3 = c2 * c2 * x;
             c2 += d;
             c4 += d;
@@ -545,7 +569,8 @@ public class Gamma extends DistBase
                 final double two = 2.0;
                 return r * ((((two / 9 * yes + two / 7) * yes + two / 5) * yes + two / 3) * yes - x);
             } else {
-                return r * (2 * yes * logCF(yes, 3, 2) - x);
+                final double tol_logCF = 1e-14;
+                return r * (2 * yes * logCF(yes, 3, 2, tol_logCF) - x);
             }
         }
     }
@@ -556,46 +581,46 @@ public class Gamma extends DistBase
 
         final int N = 40;
         final double[] coeFfs = {
-            0.3224670334241132182362075833230126e-0,
-            0.6735230105319809513324605383715000e-1,
-            0.2058080842778454787900092413529198e-1,
-            0.7385551028673985266273097291406834e-2,
-            0.2890510330741523285752988298486755e-2,
-            0.1192753911703260977113935692828109e-2,
-            0.5096695247430424223356548135815582e-3,
-            0.2231547584535793797614188036013401e-3,
-            0.9945751278180853371459589003190170e-4,
-            0.4492623673813314170020750240635786e-4,
-            0.2050721277567069155316650397830591e-4,
-            0.9439488275268395903987425104415055e-5,
-            0.4374866789907487804181793223952411e-5,
-            0.2039215753801366236781900709670839e-5,
-            0.9551412130407419832857179772951265e-6,
-            0.4492469198764566043294290331193655e-6,
-            0.2120718480555466586923135901077628e-6,
-            0.1004322482396809960872083050053344e-6,
-            0.4769810169363980565760193417246730e-7,
-            0.2271109460894316491031998116062124e-7,
-            0.1083865921489695409107491757968159e-7,
-            0.5183475041970046655121248647057669e-8,
-            0.2483674543802478317185008663991718e-8,
-            0.1192140140586091207442548202774640e-8,
-            0.5731367241678862013330194857961011e-9,
-            0.2759522885124233145178149692816341e-9,
-            0.1330476437424448948149715720858008e-9,
-            0.6422964563838100022082448087644648e-10,
-            0.3104424774732227276239215783404066e-10,
-            0.1502138408075414217093301048780668e-10,
-            0.7275974480239079662504549924814047e-11,
-            0.3527742476575915083615072228655483e-11,
-            0.1711991790559617908601084114443031e-11,
-            0.8315385841420284819798357793954418e-12,
-            0.4042200525289440065536008957032895e-12,
-            0.1966475631096616490411045679010286e-12,
-            0.9573630387838555763782200936508615e-13,
-            0.4664076026428374224576492565974577e-13,
-            0.2273736960065972320633279596737272e-13,
-            0.1109139947083452201658320007192334e-13
+                0.3224670334241132182362075833230126e-0,
+                0.6735230105319809513324605383715000e-1,
+                0.2058080842778454787900092413529198e-1,
+                0.7385551028673985266273097291406834e-2,
+                0.2890510330741523285752988298486755e-2,
+                0.1192753911703260977113935692828109e-2,
+                0.5096695247430424223356548135815582e-3,
+                0.2231547584535793797614188036013401e-3,
+                0.9945751278180853371459589003190170e-4,
+                0.4492623673813314170020750240635786e-4,
+                0.2050721277567069155316650397830591e-4,
+                0.9439488275268395903987425104415055e-5,
+                0.4374866789907487804181793223952411e-5,
+                0.2039215753801366236781900709670839e-5,
+                0.9551412130407419832857179772951265e-6,
+                0.4492469198764566043294290331193655e-6,
+                0.2120718480555466586923135901077628e-6,
+                0.1004322482396809960872083050053344e-6,
+                0.4769810169363980565760193417246730e-7,
+                0.2271109460894316491031998116062124e-7,
+                0.1083865921489695409107491757968159e-7,
+                0.5183475041970046655121248647057669e-8,
+                0.2483674543802478317185008663991718e-8,
+                0.1192140140586091207442548202774640e-8,
+                0.5731367241678862013330194857961011e-9,
+                0.2759522885124233145178149692816341e-9,
+                0.1330476437424448948149715720858008e-9,
+                0.6422964563838100022082448087644648e-10,
+                0.3104424774732227276239215783404066e-10,
+                0.1502138408075414217093301048780668e-10,
+                0.7275974480239079662504549924814047e-11,
+                0.3527742476575915083615072228655483e-11,
+                0.1711991790559617908601084114443031e-11,
+                0.8315385841420284819798357793954418e-12,
+                0.4042200525289440065536008957032895e-12,
+                0.1966475631096616490411045679010286e-12,
+                0.9573630387838555763782200936508615e-13,
+                0.4664076026428374224576492565974577e-13,
+                0.2273736960065972320633279596737272e-13,
+                0.1109139947083452201658320007192334e-13
         };
 
         final double c = 0.2273736845824652515226821577978691e-12;
@@ -603,7 +628,7 @@ public class Gamma extends DistBase
         if (Math.abs (a) >= 0.5)
             return LogGamma.logGamma(a + 1);
 
-        double logGam = c * logCF(-a / 2, N + 2, 1);
+        double logGam = c * logCF(-a / 2, N + 2, 1, 1e-14);
         for (int i = N - 1; i >= 0; i--) {
             logGam = coeFfs[i] - a * logGam;
         }
@@ -757,6 +782,7 @@ public class Gamma extends DistBase
 
             if (b2 != 0) {
                 f = a2 / b2;
+                /* convergence check: relative; "absolute" for very small f : */
                 if (Math.abs (f - of) <= Dpq.DBL_EPSILON * Math.max(f0, Math.abs(f))) {
                     return f;
                 }
@@ -814,25 +840,25 @@ public class Gamma extends DistBase
     private static double poissonAsymptotic(double x, double lambda, boolean lower_tail, boolean log_p)
     {
         final double[] coeFs_a = {
-            -1e99, /* placeholder used for 1-indexing */
-            2/3.,
-            -4/135.,
-            8/2835.,
-            16/8505.,
-            -8992/12629925.,
-            -334144/492567075.,
-            698752/1477701225.
+                -1e99, /* placeholder used for 1-indexing */
+                2/3.,
+                -4/135.,
+                8/2835.,
+                16/8505.,
+                -8992/12629925.,
+                -334144/492567075.,
+                698752/1477701225.
         };
 
         final double[] coeFs_b = {
-            -1e99, /* placeholder */
-            1/12.0,
-            1/288.0,
-            -139/51840.0,
-            -571/2488320.0,
-            163879/209018880.0,
-            5246819/75246796800.0,
-            -534703531/902961561600.0
+                -1e99, /* placeholder */
+                1/12.0,
+                1/288.0,
+                -139/51840.0,
+                -571/2488320.0,
+                163879/209018880.0,
+                5246819/75246796800.0,
+                -534703531/902961561600.0
         };
 
         double dfm = lambda - x;
@@ -943,7 +969,7 @@ public class Gamma extends DistBase
     }
 
     private static double quantileChisApp(double p, double nu, double g,
-                                          boolean lower_tail, boolean log_p)
+                                          boolean lower_tail, boolean log_p, double tol)
     {
         final double C7	= 4.67;
         final double C8	= 6.66;
@@ -990,7 +1016,7 @@ public class Gamma extends DistBase
                 p2 = ch * (C9 + ch * (C8 + ch));
                 t = -0.5 + (C7 + 2 * ch) * p1 - (C9 + ch * (C10 + 3 * ch)) / p2;
                 ch -= (1- Math.exp(a + 0.5 * ch) * p2 * p1) / t;
-            } while (Math.abs(q - ch) > 0.01 * Math.abs(ch));
+            } while (Math.abs(q - ch) > tol * Math.abs(ch));
         }
 
         return ch;
@@ -1001,7 +1027,7 @@ public class Gamma extends DistBase
         System.out.println(pdf(4, 1, 1));
 
         System.out.println(cdf(0.987, 1, 2));
-        System.out.println(quantile(0.975, 10, 20));
+        System.out.println(quantile(0.975, 10, 20, true, true));
         System.out.println(rand(1.0, 2.0));
     }
 }
