@@ -127,7 +127,7 @@ public class Gamma extends DistBase
 
         p_ = Dpq.DTqIv(p, lower_tail, log_p);
         g = LogGamma.logGamma(alpha);
-        ch = quantileChisApp(p, 2.0 * alpha, g, lower_tail, log_p, EPS1);
+        ch = quantileChisApp(p, 2.0 * alpha, g, lower_tail, log_p);
 
         if (Double.isInfinite(ch)) {
             return 0.5 * scale * ch;
@@ -167,9 +167,9 @@ public class Gamma extends DistBase
                     break;
                 }
 
-                t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+                t = p1 * Math.exp(p_ - g);
                 t = lower_tail ? x - t : x + t;
-                p_ = cdf(t, alpha, scale, lower_tail, log_p);
+                p_ = cdf(t, alpha, scale, lower_tail, true);
                 if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                     break;
                 }
@@ -189,12 +189,12 @@ public class Gamma extends DistBase
                 final double _1_p = 1.0 + 1e-7;
                 final double _1_m = 1.0 - 1e-7;
                 x = Double.MIN_VALUE;
-                p_ = cdf(x, alpha, scale, lower_tail, log_p);
+                p_ = cdf(x, alpha, scale, lower_tail, true);
                 if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
                     return 0.0;
                 }
             } else {
-                p_ = cdf(x, alpha, scale, lower_tail, log_p);
+                p_ = cdf(x, alpha, scale, lower_tail, true);
             }
 
             if (p_ == Double.NEGATIVE_INFINITY) {
@@ -212,9 +212,9 @@ public class Gamma extends DistBase
                     break;
                 }
 
-                t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+                t = p1 * Math.exp(p_ - g);
                 t = lower_tail ? x - t : x + t;
-                p_ = cdf(t, alpha, scale, lower_tail, log_p);
+                p_ = cdf(t, alpha, scale, lower_tail, true);
                 if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                     break;
                 }
@@ -265,12 +265,12 @@ public class Gamma extends DistBase
             final double _1_p = 1.0 + 1e-7;
             final double _1_m = 1.0 - 1e-7;
             x = Double.MIN_VALUE;
-            p_ = cdf(x, alpha, scale, lower_tail, log_p);
+            p_ = cdf(x, alpha, scale, lower_tail, true);
             if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
                 return 0.0;
             }
         } else {
-            p_ = cdf(x, alpha, scale, lower_tail, log_p);
+            p_ = cdf(x, alpha, scale, lower_tail, true);
         }
 
         if (p_ == Double.NEGATIVE_INFINITY) {
@@ -288,9 +288,9 @@ public class Gamma extends DistBase
                 break;
             }
 
-            t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+            t = p1 * Math.exp(p_ - g);
             t = lower_tail ? x - t : x + t;
-            p_ = cdf(t, alpha, scale, lower_tail, log_p);
+            p_ = cdf(t, alpha, scale, lower_tail, true);
             if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) == Math.abs(p1))) {
                 break;
             }
@@ -362,41 +362,27 @@ public class Gamma extends DistBase
             return scale * x;
         }
 
-        /* --- a >= 1 : GD algorithm --- */
-
-        /* Step 1: Recalculations of s2, s, d if a has changed */
         if (a != aa) {
             aa = a;
             s2 = a - 0.5;
             s = Math.sqrt(s2);
             d = sqrt32 - s * 12.0;
         }
-    /* Step 2: t = standard normal deviate,
-               x = (s,1/2) -normal deviate. */
 
-        /* immediate acceptance (i) */
         t = NormalRand.rand();
         x = s + 0.5 * t;
         ret_val = x * x;
         if (t >= 0.0)
             return scale * ret_val;
 
-        /* Step 3: u = 0,1 - uniform sample. squeeze acceptance (s) */
         u = UniformRand.rand();
         if (d * u <= t * t * t)
             return scale * ret_val;
 
-        /* Step 4: recalculations of q0, b, si, c if necessary */
 
         if (a != aaa) {
-            aaa = a;
             r = 1.0 / a;
-            q0 = ((((((q7 * r + q6) * r + q5) * r + q4) * r + q3) * r
-                    + q2) * r + q1) * r;
-
-            /* Approximation depending on size of parameter a */
-            /* The constants in the expressions for b, si and c */
-            /* were established by numerical experiments */
+            q0 = ((((((q7 * r + q6) * r + q5) * r + q4) * r + q3) * r + q2) * r + q1) * r;
 
             if (a <= 3.686) {
                 b = 0.463 + s + 0.178 * s2;
@@ -412,27 +398,22 @@ public class Gamma extends DistBase
                 c = 0.1515 / s;
             }
         }
-        /* Step 5: no quotient test if x not positive */
 
         if (x > 0.0) {
-            /* Step 6: calculation of v and quotient q */
             v = t / (s + s);
-            if (Math.abs(v) <= 0.25)
+            if (Math.abs(v) <= 0.25) {
                 q = q0 + 0.5 * t * t * ((((((a7 * v + a6) * v + a5) * v + a4) * v
                         + a3) * v + a2) * v + a1) * v;
-            else
+            } else {
                 q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
+            }
 
-
-            /* Step 7: quotient acceptance (q) */
-            if (Math.log(1.0 - u) <= q)
+            if (Math.log(1.0 - u) <= q) {
                 return scale * ret_val;
+            }
         }
 
         for(;;) {
-            /* Step 8: e = standard exponential deviate
-             *	u =  0,1 -uniform deviate
-             *	t = (b,si)-double exponential (laplace) sample */
             e = expRand();
             u = UniformRand.rand();
             u = u + u - 1.0;
@@ -440,9 +421,7 @@ public class Gamma extends DistBase
                 t = b - si * e;
             else
                 t = b + si * e;
-            /* Step	 9:  rejection if t < tau(1) = -0.71874483771719 */
             if (t >= -0.71874483771719) {
-                /* Step 10:	 calculation of v and quotient q */
                 v = t / (s + s);
                 if (Math.abs(v) <= 0.25)
                     q = q0 + 0.5 * t * t *
@@ -450,17 +429,14 @@ public class Gamma extends DistBase
                                     + a2) * v + a1) * v;
                 else
                     q = q0 - s * t + 0.25 * t * t + (s2 + s2) * Math.log(1.0 + v);
-                /* Step 11:	 hat acceptance (h) */
-                /* (if q not positive go to step 8) */
+
                 if (q > 0.0) {
                     w = Math.expm1(q);
-                    /*  ^^^^^ original code had approximation with rel.err < 2e-7 */
-                    /* if t is rejected sample again at step 8 */
                     if (c * Math.abs(u) <= w * Math.exp(e - 0.5 * t * t))
                         break;
                 }
             }
-        } /* repeat .. until  `t' is accepted */
+        }
         x = s + 0.5 * t;
         return scale * x * x;
     }
@@ -516,7 +492,7 @@ public class Gamma extends DistBase
         return a + uMin * q[0];
     }
 
-    private static double logCF(double x, double i, double d, double eps)
+    private static double logCF(double x, double i, double d)
     {
         double c1 = 2 * d;
         double c2 = i + d;
@@ -529,7 +505,7 @@ public class Gamma extends DistBase
 
         b2 = c4 * b1 - i * b2;
 
-        while (Math.abs(a2 * b1 - a1 * b2) > Math.abs(eps * b1 * b2)) {
+        while (Math.abs(a2 * b1 - a1 * b2) > Math.abs(1.0E-14 * b1 * b2)) {
             double c3 = c2 * c2 * x;
             c2 += d;
             c4 += d;
@@ -569,8 +545,7 @@ public class Gamma extends DistBase
                 final double two = 2.0;
                 return r * ((((two / 9 * yes + two / 7) * yes + two / 5) * yes + two / 3) * yes - x);
             } else {
-                final double tol_logCF = 1e-14;
-                return r * (2 * yes * logCF(yes, 3, 2, tol_logCF) - x);
+                return r * (2 * yes * logCF(yes, 3, 2) - x);
             }
         }
     }
@@ -628,7 +603,7 @@ public class Gamma extends DistBase
         if (Math.abs (a) >= 0.5)
             return LogGamma.logGamma(a + 1);
 
-        double logGam = c * logCF(-a / 2, N + 2, 1, 1e-14);
+        double logGam = c * logCF(-a / 2, N + 2, 1);
         for (int i = N - 1; i >= 0; i--) {
             logGam = coeFfs[i] - a * logGam;
         }
@@ -782,7 +757,6 @@ public class Gamma extends DistBase
 
             if (b2 != 0) {
                 f = a2 / b2;
-                /* convergence check: relative; "absolute" for very small f : */
                 if (Math.abs (f - of) <= Dpq.DBL_EPSILON * Math.max(f0, Math.abs(f))) {
                     return f;
                 }
@@ -969,7 +943,7 @@ public class Gamma extends DistBase
     }
 
     private static double quantileChisApp(double p, double nu, double g,
-                                         boolean lower_tail, boolean log_p, double tol)
+                                          boolean lower_tail, boolean log_p)
     {
         final double C7	= 4.67;
         final double C8	= 6.66;
@@ -1016,7 +990,7 @@ public class Gamma extends DistBase
                 p2 = ch * (C9 + ch * (C8 + ch));
                 t = -0.5 + (C7 + 2 * ch) * p1 - (C9 + ch * (C10 + 3 * ch)) / p2;
                 ch -= (1- Math.exp(a + 0.5 * ch) * p2 * p1) / t;
-            } while (Math.abs(q - ch) > tol * Math.abs(ch));
+            } while (Math.abs(q - ch) > 0.01 * Math.abs(ch));
         }
 
         return ch;
