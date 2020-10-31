@@ -6,6 +6,7 @@ public class Dpq
     public static final double DBL_EPSILON = 2.2204460492503131E-16;
     public static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
     public static final double M_LN_2PI = 1.837877066409345483560659472811;	// log(2*pi)
+    public static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;	// 1/sqrt(2pi)
 
     public static double nanWarn()
     {
@@ -145,23 +146,23 @@ public class Dpq
     public static double QP01Boundaries(double p, double l, double r, boolean lower_tail, boolean log_p)
     {
         if (log_p) {
-            if (p > 0) {
+            if (p > 0.0) {
                 return nanWarn();
             }
-            if (p == 0) {
+            if (p == 0.0) {
                 return lower_tail ? r : l;
             }
             if (p == Double.NEGATIVE_INFINITY) {
                 return lower_tail ? l : r;
             }
         } else {
-            if (p < 0 || p > 1) {
+            if (p < 0.0 || p > 1.0) {
                 return nanWarn();
             }
-            if (p == 0) {
+            if (p == 0.0) {
                 return lower_tail ? l : r;
             }
-            if (p == 1) {
+            if (p == 1.0) {
                 return lower_tail ? r : l;
             }
         }

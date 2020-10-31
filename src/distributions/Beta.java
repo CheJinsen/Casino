@@ -611,7 +611,7 @@ public class Beta extends DistBase
         double a, b, alpha;
         double r, s, t, u1, u2, v, w, y, z;
 
-        double beta = 0.0, gamma = 0.0, delta, k1 = 0.0, k2 = 0.0;
+        double beta = 0.0, gamma, delta, k1 = 0.0, k2 = 0.0;
         boolean qSame = (-1.0 == aa) && (-1.0 == bb);
         final double exp_max = Double.MAX_EXPONENT * Dpq.M_LN2;
 
