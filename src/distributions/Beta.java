@@ -1,6 +1,8 @@
 package distributions;
 
 import distributions.detail.*;
+import random.UniformRand;
+import statistics.Stats;
 
 public class Beta extends DistBase
 {
@@ -275,7 +277,6 @@ public class Beta extends DistBase
                 System.out.println("Full precision may not have been achieved in Beta.quantile()");
             }
 
-
             // L_converged
             if (y == Double.NEGATIVE_INFINITY) {
                 u_n = DBL_LOG_V_MIN;// = log(DBL_very_MIN)
@@ -286,8 +287,6 @@ public class Beta extends DistBase
                     System.out.printf("Beta.quantile(a, *) =: x0 with | Beta.cdf(x0,*%s) - alpha| = %.5g " +
                                     "is not accurate", ", log_", Math.abs(y - la));
             }
-
-
 
             // L_return
             if(add_N_step) {
@@ -312,7 +311,6 @@ public class Beta extends DistBase
                 qb[0] = tx;	qb[1] = 1 - tx;
             }
             return;
-
         }
 
         r = Math.sqrt(-2.8 * la);
@@ -589,6 +587,114 @@ public class Beta extends DistBase
         }
     }
 
+    public static double rand(double aa, double bb)
+    {
+        if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0.0 || bb < 0.0) {
+            return Dpq.nanWarn();
+        }
+        if (Double.isInfinite(aa) && Double.isInfinite(bb)) {
+            return 0.5;
+        }
+
+        boolean is_aa_zero = aa == 0.0;
+        boolean is_bb_zero = bb == 0.0;
+        if (is_aa_zero || is_bb_zero) {
+            return UniformRand.rand() < 0.5 ? 0.0 : 1.0;
+        }
+        if (Double.isInfinite(aa) || bb == 0.0) {
+            return 1.0;
+        }
+        if (Double.isInfinite(bb) || aa == 0.0) {
+            return 0.0;
+        }
+
+        double a, b, alpha;
+        double r, s, t, u1, u2, v, w, y, z;
+
+        double beta = 0.0, gamma = 0.0, delta, k1 = 0.0, k2 = 0.0;
+        boolean qSame = (-1.0 == aa) && (-1.0 == bb);
+        final double exp_max = Double.MAX_EXPONENT * Dpq.M_LN2;
+
+        a = Math.min(aa, bb);
+        b = Math.max(aa, bb);
+        alpha = a + b;
+
+        if (a <= 1.0) {
+            if (!qSame) {
+                beta = 1.0 / a;
+                delta = 1.0 + b - a;
+                k1 = delta * (0.0138889 + 0.0416667 * a) / (b * beta - 0.777778);
+                k2 = 0.25 + (0.5 + 0.25 / delta) * a;
+            }
+            for (;;) {
+                u1 = UniformRand.rand();
+                u2 = UniformRand.rand();
+                if (u1 < 0.5) {
+                    y = u1 * u2;
+                    z = u1 * y;
+                    if (0.25 * u2 + z - y >= k1)
+                        continue;
+                } else {
+                    z = u1 * u1 * u2;
+                    if (z <= 0.25) {
+                        v = beta * Math.log(u1 / (1.0 - u1));
+                        if (v <= exp_max) {
+                            w = b * Math.exp(v);
+                            if (Double.isInfinite(w))
+                                w = Double.MAX_VALUE;
+                        } else {
+                            w = Double.MAX_VALUE;
+                        }
+                        break;
+                    }
+                    if (z >= k2)
+                        continue;
+                }
+
+                v = beta * Math.log(u1 / (1.0 - u1));
+                if (v <= exp_max) {
+                    w = b * Math.exp(v);
+                    if (Double.isInfinite(w))
+                        w = Double.MAX_VALUE;
+                } else {
+                    w = Double.MAX_VALUE;
+                }
+
+                if (alpha * (Math.log(alpha / (a + w)) + v) - 1.3862944 >= Math.log(z)) {
+                    break;
+                }
+            }
+            return aa == a ? a / (a + w) : w / (a + w);
+        } else {
+            beta = Math.sqrt((alpha - 2.0) / (2.0 * a * b - alpha));
+            gamma = a + 1.0 / beta;
+            do {
+                u1 = UniformRand.rand();
+                u2 = UniformRand.rand();
+
+                v = beta * Math.log(u1 / (1.0 - u1));
+                if (v <= exp_max) {
+                    w = a * Math.exp(v);
+                    if (Double.isInfinite(w))
+                        w = Double.MAX_VALUE;
+                } else {
+                    w = Double.MAX_VALUE;
+                }
+
+                z = u1 * u1 * u2;
+                r = gamma * v - 1.3862944;
+                s = a + r - w;
+                if (s + 2.609438 >= 5.0 * z)
+                    break;
+                t = Math.log(z);
+                if (s > t)
+                    break;
+            } while (r + alpha * Math.log(alpha / (b + w)) < t);
+
+            return (aa != a) ? b / (b + w) : w / (b + w);
+        }
+    }
+
     private static double cdfRaw(double x, double a, double b, boolean lower_tail, boolean log_p)
     {
         if (a == 0.0 || b == 0.0 || Double.isInfinite(a) || Double.isInfinite(b)) {
@@ -624,5 +730,11 @@ public class Beta extends DistBase
         System.out.println(Beta.cdf(0.975, 10, 2));
         System.out.println(Beta.cdf(0.005, 79, 50, false, true));
         System.out.println(Beta.quantile(0.992510, 0.910, 2.0));
+
+        double[] data = new double[100];
+        for (int i = 0; i < 100; i++) {
+            data[i] = rand(10, 20);
+        }
+        System.out.println("means = " + Stats.mean(data));
     }
 }
