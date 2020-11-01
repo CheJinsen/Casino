@@ -1,6 +1,6 @@
 package special_functions;
 
-import special_functions.detail.Cospi;
+import special_functions.detail.CosPI;
 import special_functions.detail.LogGammaCor;
 import special_functions.detail.Sign;
 
@@ -51,7 +51,7 @@ public class LogGamma
             else
                 return ret + LogGammaCor.logGammaCor(x);
         }
-        sinPiy = Math.abs(Cospi.sinpi(yes));
+        sinPiy = Math.abs(CosPI.sinPI(yes));
 
         if (sinPiy == 0) {
             System.out.printf(" ** should NEVER happen! *** [logGamma: Neg.int, y=%g]\n",yes);

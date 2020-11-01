@@ -2,7 +2,7 @@ package special_functions;
 
 import special_functions.detail.Catherine;
 import special_functions.detail.Chebyshev;
-import special_functions.detail.Cospi;
+import special_functions.detail.CosPI;
 
 public class Gamma
 {
@@ -132,7 +132,7 @@ public class Gamma
                 System.out.println("Full precision may not have been achieved in gamma()");
             }
 
-            sinPiy = Cospi.sinpi(yes);
+            sinPiy = CosPI.sinPI(yes);
             if (sinPiy == 0) {
                 System.out.println("Value out of range in gamma()");
                 return Double.POSITIVE_INFINITY;
