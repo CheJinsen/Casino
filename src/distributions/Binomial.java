@@ -209,7 +209,6 @@ public class Binomial extends DistBase
 
         if (pp != p_save || n != n_save) {
             p_save = pp;
-            n_save = n;
             if (np < 30.0) {
                 qn = Math.pow(q, n);
                 //L_np_small:
