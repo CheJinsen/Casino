@@ -3,7 +3,7 @@ package distributions;
 import distributions.detail.DistBase;
 import distributions.detail.Dpq;
 
-public class Exp extends DistBase
+public class Exponential extends DistBase
 {
     public static double pdf(double x)
     {
