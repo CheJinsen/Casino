@@ -202,6 +202,7 @@ public class Dpq
         return Math.abs(x - Math.round(x)) > 1e-7 * Math.max(1.0, Math.abs(x));
     }
 
+    @Deprecated
     public static double nonIntCheck(double x, boolean log_p)
     {
         if (nonInt(x))
