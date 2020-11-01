@@ -65,6 +65,21 @@ public class Exponential extends DistBase
                 : Dpq.DExp(x, log_p);
     }
 
+    public static double quantile(double p)
+    {
+        return quantile(p, 1.0, true, false);
+    }
+
+    public static double quantile(double p, double scale)
+    {
+        return quantile(p, scale, true, false);
+    }
+
+    public static double quantile(double p, double scale, boolean lower_tail)
+    {
+        return quantile(p, scale, lower_tail, false);
+    }
+
     public static double quantile(double p, double scale, boolean lower_tail, boolean log_p)
     {
         if (Double.isNaN(p) || Double.isNaN(scale)) {
@@ -106,7 +121,9 @@ public class Exponential extends DistBase
         System.out.println(cdf(0.025));
         System.out.println(cdf(0.025, 5));
         System.out.println(cdf(0.025, 5, false, true));
+        System.out.println(quantile(0.7689, 9));
 
+        System.out.println("-------random number----------");
         for (int i = 0; i < 10; i++) {
             System.out.println(rand());
         }
