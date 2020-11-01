@@ -15,8 +15,8 @@ public class CosPI
         x = fmod(x, 2.0);
         if(x <= -1)
             x += 2.0;
-        else if (x > 1.)
-            x -= 2.;
+        else if (x > 1.0)
+            x -= 2.0;
 
         if(x == 0.0 || x == 1.0) return 0.;
         if(x ==  0.5)	return  1.0;
