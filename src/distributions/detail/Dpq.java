@@ -205,8 +205,10 @@ public class Dpq
     @Deprecated
     public static double nonIntCheck(double x, boolean log_p)
     {
-        if (nonInt(x))
+        if (nonInt(x)) {
             System.out.printf("non-integer x = %f", x);
-        return D0(log_p);
+            return D0(log_p);
+        }
+        return 0.0;
     }
 }
