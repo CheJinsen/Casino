@@ -2,11 +2,155 @@ package distributions;
 
 import distributions.detail.DistBase;
 import distributions.detail.Dpq;
+import distributions.detail.RefDouble;
 import random.NormalRand;
 import random.UniformRand;
 
 public class Poisson extends DistBase
 {
+    public static double pdf(double x, double lambda)
+    {
+        return pdf(x, lambda, false);
+    }
+
+    public static double pdf(double x, double lambda, boolean give_log)
+    {
+        if (Double.isNaN(x) || Double.isNaN(lambda)) {
+            return x + lambda;
+        }
+        if (lambda < 0.0) {
+            return Dpq.nanWarn();
+        }
+        if (Dpq.nonInt(x)) {
+            System.out.printf("non-integer x = %f", x);
+            return Dpq.D0(give_log);
+        }
+        if (x < 0.0 || Double.isInfinite(x)) {
+            return Dpq.D0(give_log);
+        }
+
+        x = Math.round(x);
+        return poissonPdfRaw(x, lambda, give_log);
+    }
+
+    public static double cdf(double x, double lambda)
+    {
+        return cdf(x, lambda, true, false);
+    }
+
+    public static double cdf(double x, double lambda, boolean lower_tail)
+    {
+        return cdf(x, lambda, lower_tail, false);
+    }
+
+    public static double cdf(double x, double lambda, boolean lower_tail, boolean log_p)
+    {
+        if (Double.isNaN(x) || Double.isNaN(lambda)) {
+            return x + lambda;
+        }
+        if (lambda < 0.0) {
+            return Dpq.nanWarn();
+        }
+        if (x < 0.0) {
+            return Dpq.DT0(lower_tail, log_p);
+        }
+        if (lambda == 0.0) {
+            return Dpq.DT1(lower_tail, log_p);
+        }
+        if (Double.isInfinite(x)) {
+            return Dpq.DT1(lower_tail, log_p);
+        }
+
+        x = Math.floor(x + 1e-7);
+        return Gamma.cdf(lambda, x + 1.0, 1.0, !lower_tail, log_p);
+    }
+
+    public static double quantile(double p, double lambda)
+    {
+        return quantile(p, lambda, true, false);
+    }
+
+    public static double quantile(double p, double lambda, boolean lower_tail)
+    {
+        return quantile(p, lambda, lower_tail, false);
+    }
+
+    public static double quantile(double p, double lambda, boolean lower_tail, boolean log_p)
+    {
+        if (Double.isNaN(p) || Double.isNaN(lambda)) {
+            return p + lambda;
+        }
+        if(Double.isInfinite(lambda)) {
+            return Dpq.nanWarn();
+        }
+        if(lambda < 0) {
+            return Dpq.nanWarn();
+        }
+        if ((log_p && p > 0) || (!log_p && (p < 0 || p > 1))) {
+            return Dpq.nanWarn();
+        }
+        if (lambda == 0) {
+            return 0;
+        }
+        if (p == Dpq.DT0(lower_tail, log_p)) {
+            return 0;
+        }
+        if (p == Dpq.DT1(lower_tail, log_p)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double sigma = Math.sqrt(lambda);
+        double gamma = 1.0 / sigma;
+
+        if (!lower_tail || log_p) {
+            p = Dpq.DTqIv(p, lower_tail, log_p);
+            if (p == 0.0) return 0;
+            if (p == 1.0) return Double.POSITIVE_INFINITY;
+        }
+        if (p + 1.01 * Dpq.DBL_EPSILON >= 1.0) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        RefDouble z = new RefDouble(0.0);
+        z.val = Normal.quantile(p, 0.0, 1.0, true, false);
+        double yes = Math.round(lambda + sigma * (z.val + gamma * (z.val * z.val - 1.0) / 6.0));
+
+        z.val = cdf(yes, lambda, true, false);
+
+        p *= 1 - 64 * Dpq.DBL_EPSILON;
+
+        if(lambda < 1e5) {
+            return doSearch(yes, z, p, lambda, 1.0);
+        }
+
+        {
+            double incR = Math.floor(yes * 0.001), old_incR;
+            do {
+                old_incR = incR;
+                yes = doSearch(yes, z, p, lambda, incR);
+                incR = Math.max(1.0, Math.floor(incR / 100.0));
+            } while (old_incR > 1.0 && incR > lambda * 1e-15);
+            return yes;
+        }
+    }
+
+    private static double doSearch(double yes, RefDouble z, double p, double lambda, double incR)
+    {
+        if (z.val >= p) {
+            for (;;) {
+                if(yes == 0 || (z.val = cdf(yes - incR, lambda, true, false)) < p)
+                    return yes;
+                yes = Math.max(0, yes - incR);
+            }
+        } else {
+            for (;;) {
+                yes = yes + incR;
+                if ((z.val = cdf(yes, lambda, true, false)) >= p)
+                    return yes;
+            }
+        }
+    }
+
     public static double rand(double mu)
     {
         final double a0	= -0.5;
@@ -33,9 +177,9 @@ public class Poisson extends DistBase
         double big_l = 0.0;
         double mu_prev = 0.0, mu_prev2 = 0.0;
 
-        double del, dif_muk = 0.0, E = 0.0, fk= 0.0, fx, fy, g, px, py, t, u= 0.0, v, x;
+        double del, dif_muk = 0.0, E, fk= 0.0, fx, fy, g, px, py, t, u= 0.0, v, x;
         double poi = -1.0;
-        int k, k_flag;
+        int k;
         boolean big_mu, new_big_mu = false;
 
         if (Double.isInfinite(mu) || mu < 0.0) {
@@ -51,13 +195,11 @@ public class Poisson extends DistBase
         if (!(big_mu && mu == mu_prev)) {
             if (big_mu) {
                 new_big_mu = true;
-                mu_prev = mu;
                 s = Math.sqrt(mu);
                 d = 6.0 * mu * mu;
                 big_l = Math.floor(mu - 1.1484);
             } else {
                 if (mu != mu_prev) {
-                    mu_prev = mu;
                     m = Math.max(1, (int)mu);
                     l = 0;
                     q = p0 = p = Math.exp(-mu);
@@ -73,8 +215,7 @@ public class Poisson extends DistBase
                             if (u <= pp[k])
                                 return k;
                         }
-                        if (l == 35)
-                            continue;
+                        continue;
                     }
 
                     l++;
@@ -83,7 +224,6 @@ public class Poisson extends DistBase
                         q += p;
                         pp[k] = q;
                         if (u <= q) {
-                            l = k;
                             return k;
                         }
                     }
@@ -106,7 +246,6 @@ public class Poisson extends DistBase
         }
 
         if (new_big_mu || mu != mu_prev2) {
-            mu_prev2 = mu;
             omega = Dpq.M_1_SQRT_2PI / s;
 
             b1 = one_24 / mu;
@@ -119,9 +258,8 @@ public class Poisson extends DistBase
         }
 
         if (g >= 0.0) {
-            k_flag = 0;
 
-	        //goto Step_F;
+            //goto Step_F;
             if (poi < 10) {
                 px = -mu;
                 py = Math.pow(mu, poi) / fact[(int)poi];
@@ -141,13 +279,8 @@ public class Poisson extends DistBase
             x *= x;/* x^2 */
             fx = -0.5 * x;
             fy = omega * (((c3 * x + c2) * x + c1) * x + c0);
-            if (k_flag > 0) {
-                if (c * Math.abs(u) <= py * Math.exp(px + E) - fy * Math.exp(fx + E))
-                    return poi;
-            } else {
-                if (fy - u * fy <= py * Math.exp(px - fx))
-                    return poi;
-            }
+            if (fy - u * fy <= py * Math.exp(px - fx))
+                return poi;
 
             for (;;) {
                 E = expRand();
@@ -157,8 +290,6 @@ public class Poisson extends DistBase
                     poi = Math.floor(mu + s * t);
                     fk = poi;
                     dif_muk = mu - fk;
-
-                    k_flag = 1;
 
                     //Step_F: // 'subroutine' F : calculation of px,py,fx,fy.
 
@@ -178,16 +309,11 @@ public class Poisson extends DistBase
                         py = Dpq.M_1_SQRT_2PI / Math.sqrt(fk);
                     }
                     x = (0.5 - dif_muk) / s;
-                    x *= x;/* x^2 */
+                    x *= x;
                     fx = -0.5 * x;
                     fy = omega * (((c3 * x + c2) * x + c1) * x + c0);
-                    if (k_flag > 0) {
-                        if (c * Math.abs(u) <= py * Math.exp(px + E) - fy * Math.exp(fx + E))
-                            break;
-                    } else {
-                        if (fy - u * fy <= py * Math.exp(px - fx))
-                            break;
-                    }
+                    if (c * Math.abs(u) <= py * Math.exp(px + E) - fy * Math.exp(fx + E))
+                        break;
                 }
             }
             return poi;
@@ -201,8 +327,6 @@ public class Poisson extends DistBase
                 poi = Math.floor(mu + s * t);
                 fk = poi;
                 dif_muk = mu - fk;
-
-                k_flag = 1;
 
                 //Step_F: // 'subroutine' F : calculation of px,py,fx,fy.
 
@@ -222,16 +346,11 @@ public class Poisson extends DistBase
                     py = Dpq.M_1_SQRT_2PI / Math.sqrt(fk);
                 }
                 x = (0.5 - dif_muk) / s;
-                x *= x;/* x^2 */
+                x *= x;
                 fx = -0.5 * x;
                 fy = omega * (((c3 * x + c2) * x + c1) * x + c0);
-                if (k_flag > 0) {
-                    if (c * Math.abs(u) <= py * Math.exp(px + E) - fy * Math.exp(fx + E))
-                        break;
-                } else {
-                    if (fy - u * fy <= py * Math.exp(px - fx))
-                        break;
-                }
+                if (c * Math.abs(u) <= py * Math.exp(px + E) - fy * Math.exp(fx + E))
+                    break;
             }
         }
         return poi;
