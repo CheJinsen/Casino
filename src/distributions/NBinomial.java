@@ -173,6 +173,28 @@ public class NBinomial extends DistBase  // Negative Binomial Distribution
         }
     }
 
+    public static double rand(double size, double prob)
+    {
+        if (Double.isInfinite(prob) || Double.isNaN(size) || size <= 0.0 || prob <= 0.0 || prob > 1.0) {
+            return Dpq.nanWarn();
+        }
+        if (Double.isInfinite(size)) {
+            size = Double.MAX_VALUE / 2.0;
+        }
+        return (prob == 1.0) ? 0.0 : Poisson.rand(Gamma.rand(size, (1.0 - prob) / prob));
+    }
+
+    public static double randMu(double size, double mu)
+    {
+        if (Double.isInfinite(mu) || Double.isNaN(size) || size <= 0.0 || mu < 0.0) {
+            return Dpq.nanWarn();
+        }
+        if (Double.isInfinite(size)) {
+            size = Double.MAX_VALUE / 2.0;
+        }
+        return (mu == 0.0) ? 0.0 : Poisson.rand(Gamma.rand(size, mu / size));
+    }
+
     public static void main(String[] args)
     {
         System.out.println(pdf(9, 2, 0.23));
@@ -180,5 +202,10 @@ public class NBinomial extends DistBase  // Negative Binomial Distribution
         System.out.println(pdf(9, 2, 5.6));
         System.out.println(cdfMu(90, 2, 5.6));
         System.out.println(cdfMu(90, 2, 5.6, false));
+
+        for (int i = 0; i < 10; i++) {
+            System.out.print(randMu(7, 0.8) + " ");
+        }
+        System.out.println();
     }
 }

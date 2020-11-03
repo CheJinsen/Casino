@@ -276,7 +276,7 @@ public class Poisson extends DistBase
                 py = Dpq.M_1_SQRT_2PI / Math.sqrt(fk);
             }
             x = (0.5 - dif_muk) / s;
-            x *= x;/* x^2 */
+            x *= x;
             fx = -0.5 * x;
             fy = omega * (((c3 * x + c2) * x + c1) * x + c0);
             if (fy - u * fy <= py * Math.exp(px - fx))
@@ -366,6 +366,14 @@ public class Poisson extends DistBase
 
     public static void main(String[] args)
     {
-        System.out.println(rand(11));
+        System.out.println(pdf(1, 2.3));
+        System.out.println(cdf(5, 2.3));
+        System.out.println(cdf(5, 2.3, false));
+        System.out.println(quantile(0.987, 8.675));
+
+        for (int i = 0; i < 10; i++) {
+            System.out.print(rand(11) + " ");
+        }
+        System.out.println();
     }
 }
