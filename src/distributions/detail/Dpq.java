@@ -7,6 +7,8 @@ public class Dpq
     public static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;	// log(sqrt(2*pi))
     public static final double M_LN_2PI = 1.837877066409345483560659472811;	// log(2*pi)
     public static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;	// 1/sqrt(2pi)
+    public static final double M_LN_SQRT_PI = 0.572364942924700087071713675677; // log(sqrt(pi))
+    public static final double M_SQRT_2dPI = 0.797884560802865355879892119869;   // sqrt(2/pi)
 
     public static double nanWarn()
     {
